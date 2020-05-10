@@ -6,20 +6,21 @@ import instabot
 import os
 import argparse
 
-
-def download_image(url, filename):
-    headers = {
+HEADERS = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36'
     }
-    response = requests.get(url, headers=headers)
+
+
+def download_image(url, filename):
+    response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
-    file_type = get_file_type(url)
-    with open(os.path.join('images', f'{filename}.{file_type}'), 'wb') as file:
+    file_extension = get_file_extension(url)
+    with open(os.path.join('images', f'{filename}.{file_extension}'), 'wb') as file:
         file.write(response.content)
 
 
-def get_file_type(file):
-    return file.split('.')[-1]
+def get_file_extension(file_name):
+    return os.path.splitext(file_name)[-1]
 
 
 def get_hubble_image_link(id):
@@ -36,21 +37,17 @@ def get_hubble_image_link(id):
 def get_hubble_images_id(collection):
     response = requests.get(f'http://hubblesite.org/api/v3/images/{collection}')
     response.raise_for_status()
-    image_ids = []
-    [image_ids.append(api_answer['id']) for api_answer in response.json()]
+    image_ids = [api_answer['id'] for api_answer in response.json()]
     return image_ids
 
 
 def get_image_links(year):
     url = 'https://api.spacexdata.com/v3/launches/'
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36'
-    }
     params = {
         'launch_year': year
     }
     image_links = []
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=HEADERS, params=params)
     response.raise_for_status()
     for api_answer in response.json():
         [image_links.append(image) for image in api_answer['links']['flickr_images']]
