@@ -3,7 +3,7 @@ import requests
 from tqdm import tqdm
 from PIL import Image
 import instabot
-from os import listdir
+import os
 import argparse
 
 
@@ -14,7 +14,7 @@ def download_image(url, filename):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     file_type = get_file_type(url)
-    with open(f'images/{filename}.{file_type}', 'wb') as file:
+    with open(os.path.join('images', f'{filename}.{file_type}'), 'wb') as file:
         file.write(response.content)
 
 
@@ -71,13 +71,13 @@ def fetch_hubble_images(collection):
 
 
 def resize_image_for_instagram():
-    images = listdir('images')
+    images = os.listdir('images')
     for image in tqdm(images):
-        new_image = Image.open(f'images/{image}')
+        new_image = Image.open(os.path.join('images', image))
         new_width = 1080 if new_image.width > 1080 else new_image.width
         new_height = 1080 if new_image.height > 1080 else new_image.height
         new_image.thumbnail((new_width, new_height))
-        new_image.save(f'images_for_inst/{image}', format='JPEG')
+        new_image.save(os.path.join('images_for_inst', image), format='JPEG')
 
 
 def create_default_folders():
@@ -86,20 +86,22 @@ def create_default_folders():
 
 
 def send_images_to_instagram(login, password):
-    files = listdir('images_for_inst')
+    files = os.listdir('images_for_inst')
     images = filter(lambda x: x.endswith('.jpg'), files)
     bot = instabot.Bot()
     bot.login(username=login, password=password)
     for image in tqdm(images):
-        bot.upload_photo(f'images_for_inst/{image}')
+        bot.upload_photo(os.path.join('images_for_inst', image))
 
 
 def init_args():
     parser = argparse.ArgumentParser(description='Скачивание и отправка фотографий в инстаграм.')
     parser.add_argument('-login', type=str, help='Логин от инстаграм аккаунта.')
     parser.add_argument('-password', type=str, help='Пароль от инстаграм аккаунта.')
-    parser.add_argument('-get_images', type=bool, default=False, help='Запускает скачиваение фотографий.')
-    parser.add_argument('-send_images', type=bool, default=False, help='Отправить фотографии в инстаграм.')
+    parser.add_argument('-get_images', action='store_true', default=False,
+                        help='Запускает скачиваение фотографий.')
+    parser.add_argument('-send_images', default=False, action='store_true',
+                        help='Отправить фотографии в инстаграм.')
     parser.add_argument('-spacex_year_images', type=int, default=2019, help='Год spaceX фотографий.')
     parser.add_argument('-hubble_collection_images',
                         type=str,
